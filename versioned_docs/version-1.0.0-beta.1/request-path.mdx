@@ -1,0 +1,56 @@
+---
+title: The request path
+sidebar_position: 8
+hide_title: true
+description: "Layer order, where each decision is made once, and what the order protects"
+keywords: ["Tower layers", "request path", "layer order", "middleware", "security architecture"]
+---
+
+import LayerFlow from '@site/src/components/LayerFlow';
+
+# The request path
+
+A request passes through about twenty-seven layers on its way to the broker. The order of those layers matters more than which layers there are. The order is the security-relevant part of the design. A cache above authorization would answer a request nobody authenticated, and a filter above a decision would filter against a policy nobody chose. Each layer's position has a reason, and that reason is stated where the stack is assembled, so the whole order can be reviewed in one place.
+
+## The order
+
+Outermost first. A request meets these in this sequence, and a response meets them in reverse. Three wrappers sit around everything. The proxied stack comes after them.
+
+<LayerFlow />
+
+Rows 21 to 26 each narrow the request under the decision above, in this order. Each also filters the response, including the linked entities of a join answer and the context source registrations of a registration read. An entity or registration a restriction withholds by identifier gets the same 404 that an absent one gets, so a restricted caller cannot learn which identifiers exist.
+
+## What the order is protecting against
+
+**A context is resolved once, and above authorization.** Every name in NGSI-LD, an entity type, an attribute, a term inside a `q` filter, means whatever the request's `@context` says it means. If it is resolved twice, the two resolutions can disagree. A cached context expires between them, a remote context changes, and one layer authorizes against a meaning a later layer does not share. So it is resolved once, put into the request extensions, and read from there by everything below. A layer that finds it absent refuses rather than continuing, because a missing extension means the stack was assembled in the wrong order.
+
+Resolving it means reading the request body, and reading **every** body rather than only an `application/ld+json` one. The two context channels are mutually exclusive. An inline `@context` belongs to `ld+json`, and a context `Link` header belongs to `application/json`. A request that mixes them is refused rather than resolved, because picking a winner means guessing which context the broker would have used. Suppose an `application/json` body carried an `@context` that nobody read. It would be authorized against the core context and forwarded. A broker whose content-type parsing handled that request under the ld+json rules would then store it under a context Libra never saw. The read is bounded by the payload limit above it.
+
+**What a request is, and what its query string says, are resolved once, too.** Authorization weighs the operation and canonicalizes the query. The representation and linked-entity layers read selectors from both, and every enforcement layer branches on the operation and narrows the query. A layer that classified the path or parsed the query string for itself could read one request differently from the layer above it. So each is read once, near the top, and everything below reads the stored value. The query is the one value that layers below change. Each narrowing writes the stored parameters and the request target in one step, so the stored query is always the one the broker is sent, and a layer never judges a query that is not the one forwarded.
+
+**What a request asks for in Linked Entity Retrieval is resolved once, too.** A join is asked for in the query string, in a `POST /entityOperations/query` body, or in a subscription's notification. Authorization and the enforcement layers all need that answer. Authorization weighs a join as touching every type its selectors and joins name. Each enforcement layer judges a join answer linked entity by linked entity on the way back, which needs one shared reading of what was asked. Whether a join can be served at all is decided per restriction. A join whose answer cannot be judged, such as one in `keyValues`, where a withheld linked entity cannot be told from data, is refused.
+
+**Identity header stripping must be above everything that touches those headers.** Libra tells the broker who the caller is with `X-Auth-*` headers, and the broker trusts them. The stripping layer and the propagation layer work from one shared list, `libra_hardening::identity_headers::PROPAGATED_HEADERS`. A name is stripped however it is spelled. Each underscore is read as a hyphen, letter case does not matter, and the name is stripped however many times it repeats. Anything that reads as a propagated name is removed before a request reaches the first layer that could believe it.
+
+**Audit above everything that can refuse.** The audit layer sits at the top of the proxied stack so that a refusal is recorded as faithfully as a success. It records the outcome, the caller when the layers below could determine one, the path without the query string, and a fingerprint of the credential rather than the credential. Nothing below writes to it, and nothing above it is left to record.
+
+**Timed, bounded and counted before anything is read.** The in-flight ceiling, the upstream timeout and the payload limit sit above every layer that reads a body or waits on the broker. So no request can pin memory or a broker connection without end, and no single request can buffer without end or wait without end. The ceiling bounds how many requests are processed at once. It is not a rate limiter, and none ships in this edition. A flood arriving faster than the ceiling drains is for an edge proxy or ingress in front of Libra. [Known limitations](security/known-limitations.md) states what that means for a deployment.
+
+## The routes that are not proxied
+
+The order above is the path to the broker. It is what a request meets when no route matched, and everything Libra serves itself is a route that matches. So the probes, the build info, the metrics endpoint and any management route a binary adds never enter that stack.
+
+The management routes carry the same listener protections as the proxied path, in the same relative order, with the same settings: audit, payload limit, identity header stripping, security headers. They are mounted on their own routes rather than over the whole router. That is what keeps them off the proxied path. What they do not get:
+
+| Layer | Why not |
+| --- | --- |
+| Upstream timeout (7) | There is no upstream. A 504 saying one did not answer would describe a request that was never made. |
+| In-flight ceiling (6) | The management routes are admin-authenticated, and a shared ceiling would lock the operator out during the incident the ceiling exists for. |
+| Method refusal (10) | The management routes define their own methods. |
+| Tenant, authentication, operation classification, query parsing, context, representation, linked entity resolution, authorization (12 to 19) | This is a different question with a different answer. Each management route carries the management privilege gate, which asks whether the caller is privileged rather than what the policy set allows. |
+
+The probes sit outside even that. `/ngsi-ld/auth/health` and `/ngsi-ld/auth/ready` are mounted bare. A readiness check has to answer when the identity provider does not. A protection that could refuse a probe would let one noisy client sharing its source address give an orchestrator a reason to restart a process that was serving fine.
+
+## A binary adds only at row 20
+
+Nothing else is open to change. A binary that adds layers, such as a cache or a deduplicator, places them at row 20 through the extension point that [architecture](architecture.md) describes. They then sit below authorization and above the enforcement stack, where the decision is available to key on. That placement matters. A cache above authorization would answer a request nobody authenticated.

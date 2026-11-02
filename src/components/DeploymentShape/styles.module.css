@@ -1,0 +1,170 @@
+/* Three parties in a row with the identity provider under Libra, the layout of
+   the plain-text drawing this replaces. The arrow tracks are narrow columns and
+   a short row of their own. */
+.shape {
+  display: grid;
+  grid-template-columns: 1fr 2.5rem 1fr 2.5rem 1fr;
+  grid-template-rows: auto 2rem auto;
+  grid-template-areas:
+    'client toLibra libra toBroker broker'
+    '.      .       toIdp .        .'
+    '.      .       idp   .        .';
+  max-width: 48rem;
+  margin: 0 auto 1.5rem;
+}
+
+.client {
+  grid-area: client;
+}
+
+.libra {
+  grid-area: libra;
+}
+
+.broker {
+  grid-area: broker;
+}
+
+.idp {
+  grid-area: idp;
+}
+
+.toLibra {
+  grid-area: toLibra;
+}
+
+.toBroker {
+  grid-area: toBroker;
+}
+
+.toIdp {
+  grid-area: toIdp;
+}
+
+/* The node is the one the request flows draw: a card with a heavier left
+   edge whose colour says whose box it is. */
+.node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-left: 3px solid var(--ifm-color-emphasis-500);
+  border-radius: 8px;
+  background: var(--ifm-card-background-color);
+}
+
+.node.libra {
+  border-left-color: var(--ifm-color-primary);
+}
+
+.node.caller {
+  border-left-color: var(--ifm-color-emphasis-400);
+  background: var(--ifm-color-emphasis-100);
+}
+
+.node.external {
+  border-style: dashed;
+  border-left-style: dashed;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.caption {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+/* The connector is the one the request flows draw, turned on its side where
+   it runs across: a 2px line ending in an arrowhead. */
+.arrow {
+  position: relative;
+}
+
+.arrow::after,
+.arrow::before {
+  content: '';
+  position: absolute;
+}
+
+.toLibra::after,
+.toBroker::after {
+  top: 50%;
+  left: 0.3rem;
+  right: 0.3rem;
+  height: 2px;
+  background: var(--ifm-color-emphasis-400);
+  transform: translateY(-50%);
+}
+
+.toLibra::before,
+.toBroker::before {
+  top: 50%;
+  right: 0.1rem;
+  z-index: 1;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid var(--ifm-color-emphasis-500);
+  transform: translateY(-50%);
+}
+
+.toIdp::after {
+  left: 50%;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  width: 2px;
+  background: var(--ifm-color-emphasis-400);
+  transform: translateX(-50%);
+}
+
+.toIdp::before {
+  left: 50%;
+  bottom: 0.1rem;
+  z-index: 1;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--ifm-color-emphasis-500);
+  transform: translateX(-50%);
+}
+
+/* Too narrow for three cards side by side: the chain runs down instead, and
+   the broker and the identity provider sit side by side under Libra. */
+@media (max-width: 640px) {
+  .shape {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 2rem auto 2rem auto;
+    column-gap: 0.75rem;
+    grid-template-areas:
+      'client   client'
+      'toLibra  toLibra'
+      'libra    libra'
+      'toBroker toIdp'
+      'broker   idp';
+  }
+
+  .toLibra::after,
+  .toBroker::after {
+    top: 0.3rem;
+    bottom: 0.3rem;
+    left: 50%;
+    right: auto;
+    width: 2px;
+    height: auto;
+    transform: translateX(-50%);
+  }
+
+  .toLibra::before,
+  .toBroker::before {
+    top: auto;
+    bottom: 0.1rem;
+    left: 50%;
+    right: auto;
+    border-top: 6px solid var(--ifm-color-emphasis-500);
+    border-bottom: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    transform: translateX(-50%);
+  }
+}

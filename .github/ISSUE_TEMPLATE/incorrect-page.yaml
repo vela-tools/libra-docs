@@ -1,0 +1,34 @@
+name: Incorrect page
+description: A guide or reference page describes behaviour Libra does not have.
+labels: ["documentation"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The URL, or the path under versioned_docs.
+      placeholder: https://vela-tools.github.io/libra/docs/getting-started
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Libra version
+      description: The output of libra --version. The documentation version should match it.
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: What the page says
+      description: Quote the sentence or the code block.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happens instead
+      description: Paste the command you ran and the output it produced. Terminal output is formatted automatically.
+      render: text
+    validations:
+      required: true

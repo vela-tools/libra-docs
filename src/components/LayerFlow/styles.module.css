@@ -1,0 +1,121 @@
+.flow {
+  max-width: 36rem;
+  margin: 0 auto 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+/* The connector between two layers: a short vertical line and an arrowhead,
+   both centered under the node above. Tighter than the overview flow, which
+   carries five steps; this one carries twenty-five. */
+.step {
+  position: relative;
+  padding-bottom: 1.1rem;
+}
+
+.step:last-child {
+  padding-bottom: 0;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.2rem;
+  width: 2px;
+  height: 0.6rem;
+  background: var(--ifm-color-emphasis-400);
+  transform: translateX(-50%);
+}
+
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--ifm-color-emphasis-500);
+  transform: translateX(-50%);
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-left: 3px solid var(--ifm-color-emphasis-500);
+  border-radius: 8px;
+  background: var(--ifm-card-background-color);
+}
+
+.stage .node,
+.decision .node {
+  border-left-color: var(--ifm-color-primary);
+}
+
+/* The three listeners that sit around the proxied stack rather than in it. */
+.wrapper .node {
+  border-left-color: var(--ifm-color-emphasis-400);
+  background: var(--ifm-color-emphasis-100);
+}
+
+/* The extension point and the hop to the broker: openings to something
+   outside the stack this page describes, drawn dashed. */
+.slot .node,
+.exit .node {
+  border-style: dashed;
+  border-left-style: dashed;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.row {
+  margin-right: 0.25rem;
+  font-family: 'Iosevka Web', monospace;
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.name {
+  font-weight: 600;
+}
+
+/* Marks the positions the order is argued from: the decision the stack
+   produces, the slot a binary adds at, and the block that narrows under the
+   decision. */
+.tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ifm-color-primary);
+}
+
+.slot .tag {
+  color: var(--ifm-color-emphasis-600);
+}
+
+.caption {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.refuse {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Iosevka Web', monospace;
+  font-size: 0.75rem;
+  color: var(--ifm-color-warning-dark);
+  background: rgba(230, 168, 24, 0.14);
+}

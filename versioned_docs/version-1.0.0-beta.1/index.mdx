@@ -1,0 +1,28 @@
+---
+title: Overview
+sidebar_position: 0
+slug: /
+hide_title: true
+description: "What Libra is and how a request goes through it"
+keywords: ["NGSI-LD", "authorization proxy", "policy enforcement point", "context broker", "FIWARE", "EUPL-1.2"]
+---
+
+import RequestFlow from '@site/src/components/RequestFlow';
+
+# Overview
+
+Libra is an authentication and authorization proxy in front of an NGSI-LD context broker. It authenticates the caller, decides against a policy set, narrows the request to what the policy allows, forwards it to the broker, and filters the response on its way back. Libra stores no context data.
+
+:::warning[Open beta]
+
+Libra is an open beta and under active development. It has not been independently audited, so do not put it in front of production data yet. [Known limitations](security/known-limitations.md) lists what this release does not defend.
+
+:::
+
+## How a request goes through
+
+Every request passes through the same five stages.
+
+<RequestFlow />
+
+Libra fails closed, so when it cannot decide, it refuses. Startup either succeeds completely or stops, and an unknown configuration key or policy key is a startup error rather than a silently ignored rule.
